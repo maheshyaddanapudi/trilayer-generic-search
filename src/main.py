@@ -106,8 +106,8 @@ async def lifespan(app: FastAPI):
     # 7. LLM + search pipeline
     intent_llm = build_llm_client(settings, role="intent")
     synthesis_llm = build_llm_client(settings, role="synthesis")
-    meta_cfg = registry.get("metadata")
-    intent_parser = IntentParser(intent_llm, meta_cfg.intent_prompt)
+    intent_configs = {did: registry.get(did).intent_prompt for did in registry.ids()}
+    intent_parser = IntentParser(intent_llm, intent_configs)
     synthesizer = Synthesizer(synthesis_llm)
 
     agg_pipeline = AggregationPipeline([
@@ -119,7 +119,7 @@ async def lifespan(app: FastAPI):
     search_orch = SearchOrchestrator(
         vector_search=VectorSearch(vector_writer, model),
         lucene_search=LuceneSearch(lucene_writer),
-        graph_search=GraphSearch(graph_writer),
+        graph_search=GraphSearch(graph_writer, domain_ids=list(registry.ids())),
         intent_parser=intent_parser,
         synthesizer=synthesizer,
         aggregation_pipeline=agg_pipeline,

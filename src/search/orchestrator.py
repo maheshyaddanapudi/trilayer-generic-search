@@ -69,7 +69,8 @@ class SearchOrchestrator:
 
     async def _parse_intent_node(self, state: SearchState) -> SearchState:
         query = state["query"]
-        intent = await asyncio.to_thread(self._intent_parser.parse, query)
+        domain = state.get("domain")
+        intent = await asyncio.to_thread(self._intent_parser.parse, query, domain)
         return {**state, "intent": intent}
 
     async def _triple_search_node(self, state: SearchState) -> SearchState:
