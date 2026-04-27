@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sample Adaptive Planning Financial Metadata.
+  Schema is the CapWords form expected by src/connectors/xml_file.py:XMLFileConnector.
+  Use case: SaaS company P&L with 3-level account hierarchy.
+-->
+<AdaptivePlanning>
+
+  <Accounts>
+    <Account code="REVENUE" desc="Total Revenue" type="standard">
+      <Attr name="owner" value="Finance"/>
+      <Attr name="reporting_line" value="income_statement"/>
+      <Attr name="sign_convention" value="credit"/>
+
+      <Account code="PROD_REVENUE" desc="Product Revenue" type="standard">
+        <Attr name="revenue_type" value="recurring"/>
+
+        <Account code="SAAS_REVENUE" desc="SaaS Subscription Revenue (ARR/MRR)" type="cube">
+          <Attr name="metric" value="arr"/>
+          <Attr name="billing_type" value="recurring_monthly"/>
+        </Account>
+
+        <Account code="LICENSE_REVENUE" desc="Perpetual License Revenue" type="cube">
+          <Attr name="billing_type" value="one_time"/>
+        </Account>
+      </Account>
+
+      <Account code="SVC_REVENUE" desc="Service Revenue" type="standard">
+        <Attr name="revenue_type" value="one_time"/>
+
+        <Account code="PROFESSIONAL_SERVICES" desc="Professional Services Revenue" type="cube"/>
+        <Account code="SUPPORT_REVENUE" desc="Support and Maintenance Revenue" type="cube"/>
+      </Account>
+    </Account>
+
+    <Account code="COGS" desc="Cost of Goods Sold" type="standard">
+      <Attr name="owner" value="Operations"/>
+      <Attr name="reporting_line" value="income_statement"/>
+      <Attr name="sign_convention" value="debit"/>
+
+      <Account code="DIRECT_MATERIAL" desc="Direct Material Cost" type="standard">
+        <Attr name="cost_driver" value="units_produced"/>
+      </Account>
+      <Account code="DIRECT_LABOR" desc="Direct Labor Cost" type="standard">
+        <Attr name="cost_driver" value="headcount"/>
+      </Account>
+    </Account>
+
+    <Account code="OPEX" desc="Operating Expenses" type="standard">
+      <Attr name="owner" value="Finance"/>
+      <Attr name="reporting_line" value="income_statement"/>
+      <Attr name="sign_convention" value="debit"/>
+
+      <Account code="HC_EXPENSE" desc="Headcount Expense" type="standard">
+        <Attr name="cost_type" value="fixed"/>
+      </Account>
+      <Account code="SW_EXPENSE" desc="Software and Tools Expense" type="standard">
+        <Attr name="cost_type" value="variable"/>
+        <Attr name="department" value="engineering"/>
+      </Account>
+    </Account>
+
+    <Account code="GROSS_PROFIT" desc="Gross Profit (Revenue minus COGS)" type="model">
+      <Attr name="formula" value="REVENUE - COGS"/>
+      <Attr name="reporting_line" value="income_statement"/>
+    </Account>
+
+    <Account code="NET_INCOME" desc="Net Income (Gross Profit minus Operating Expenses)" type="model">
+      <Attr name="formula" value="GROSS_PROFIT - OPEX"/>
+      <Attr name="reporting_line" value="income_statement"/>
+    </Account>
+  </Accounts>
+
+  <LinkedAccountGroups>
+    <LinkedAccountGroup>
+      <Member code="REVENUE"/>
+      <Member code="COGS"/>
+    </LinkedAccountGroup>
+    <LinkedAccountGroup>
+      <Member code="SAAS_REVENUE"/>
+      <Member code="SUPPORT_REVENUE"/>
+    </LinkedAccountGroup>
+  </LinkedAccountGroups>
+
+  <Levels>
+    <Level code="CORPORATE" desc="Corporate consolidated"/>
+    <Level code="REGION" desc="Regional rollup"/>
+    <Level code="BU" desc="Business unit"/>
+  </Levels>
+
+  <Versions>
+    <Version code="ACTUAL" desc="Actuals" start_time="2026-01-01" end_time="2026-12-31"/>
+    <Version code="BUDGET" desc="FY2026 Budget" start_time="2026-01-01" end_time="2026-12-31"/>
+    <Version code="FORECAST_Q1" desc="Q1 Reforecast" start_time="2026-04-01" end_time="2026-12-31"/>
+  </Versions>
+
+  <Sheets>
+    <Sheet name="PL_Summary" desc="P&amp;L Summary" type="standard" version="ACTUAL" level="CORPORATE">
+      <Account code="REVENUE"/>
+      <Account code="COGS"/>
+      <Account code="GROSS_PROFIT"/>
+      <Account code="OPEX"/>
+      <Account code="NET_INCOME"/>
+    </Sheet>
+    <Sheet name="Revenue_Detail" desc="Revenue breakdown by product line" type="standard" version="ACTUAL" level="CORPORATE">
+      <Account code="SAAS_REVENUE"/>
+      <Account code="LICENSE_REVENUE"/>
+      <Account code="PROFESSIONAL_SERVICES"/>
+      <Account code="SUPPORT_REVENUE"/>
+    </Sheet>
+  </Sheets>
+
+  <Dimensions>
+    <Dimension name="Region">
+      <DimValue name="EMEA" value="Europe Middle East Africa"/>
+      <DimValue name="NA" value="North America"/>
+      <DimValue name="APAC" value="Asia Pacific"/>
+      <DimValue name="LATAM" value="Latin America"/>
+    </Dimension>
+    <Dimension name="Product">
+      <DimValue name="CORE_SAAS" value="Core SaaS Platform"/>
+      <DimValue name="ANALYTICS" value="Analytics Add-on"/>
+    </Dimension>
+  </Dimensions>
+
+</AdaptivePlanning>

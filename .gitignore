@@ -1,0 +1,77 @@
+# =============================================================================
+# Trilayer Generic Search — top-level .gitignore
+# =============================================================================
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+.venv-*/
+venv/
+env/
+ENV/
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+# Note: .env is currently committed for the MVP example. If you start storing
+# real secrets there, uncomment the next line.
+# .env
+.env.local
+*.pem
+*.key
+
+# ── Test / coverage ──────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+
+# ── IDE / editor ─────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ── TGS runtime / data artefacts ─────────────────────────────────────────────
+# User-uploaded documents and generated indexes — these are runtime state,
+# not source. Keep the directories themselves so the app can start, but
+# drop their contents from version control.
+data/uploads/*
+!data/uploads/.gitkeep
+data/whoosh/*
+!data/whoosh/.gitkeep
+
+# Stale backups created during incident triage — never commit.
+data/sample_metadata.xml.bak.*
+
+# Ad-hoc generator scripts and large fixture files we sometimes drop next to
+# the repo for manual smoke tests.
+tgs_gen_*.py
+tgs_big_*.docx
+tgs_big_*.pdf
+tgs_big_*.xlsx
