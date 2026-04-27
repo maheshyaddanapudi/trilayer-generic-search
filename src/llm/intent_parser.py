@@ -45,16 +45,28 @@ class IntentParser:
         merged_entities: dict[str, str] = {}
         merged_synonyms: dict[str, list[str]] = {}
         merged_examples: dict[str, list[str]] = {}
+        merged_cypher: dict[str, str] = {}
         for cfg in configs.values():
             merged_entities.update(cfg.entity_type_descriptions)
             merged_synonyms.update(cfg.synonym_expansion_map)
             merged_examples.update(cfg.query_type_examples)
+            merged_cypher.update(cfg.cypher_hint_patterns)
         from src.domain.intent_prompt import IntentPromptConfig as _IPC
-        return _IPC(
+        base = _IPC(
             entity_type_descriptions=merged_entities,
             synonym_expansion_map=merged_synonyms,
             query_type_examples=merged_examples,
+            cypher_hint_patterns=merged_cypher,
         ).build_system_prompt()
+        # Append cross-domain guidance so the model knows spanning queries
+        # are expected and should not be penalised with low confidence.
+        return (
+            base
+            + "\n\nThis is a MULTI-DOMAIN search. Queries may reference entity "
+            "types from different domains simultaneously (e.g. an Account and a "
+            "Document in the same question). For such cross-domain queries, "
+            "classify as DISCOVERY and set confidence >= 0.7."
+        )
 
     def _system_for(self, domain: "str | None") -> str:
         if domain and domain in self._configs:
@@ -66,7 +78,7 @@ class IntentParser:
     def parse(self, query: str, domain: "str | None" = None) -> ParsedIntent:
         system = self._system_for(domain)
         try:
-            raw = self._llm.complete(query, system=system, max_tokens=400, temperature=0.0)
+            raw = self._llm.complete(query, system=system, max_tokens=600, temperature=0.0)
             log.info("Intent LLM raw response (domain=%s): %s", domain, raw)
             data = self._extract_json(raw)
             confidence = float(data.get("confidence", 0.0))
