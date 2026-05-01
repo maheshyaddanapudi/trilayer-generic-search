@@ -84,10 +84,12 @@ async def lifespan(app: FastAPI):
     # 4. Register domain plugins
     from plugins.metadata.plugin import build_metadata_domain
     from plugins.documents.plugin import build_document_domain
+    from plugins.posts.plugin import build_posts_domain
 
     registry = DomainRegistry.get_instance()
     registry.register(build_metadata_domain(Path(settings.metadata_file)))
     registry.register(build_document_domain(Path(settings.uploads_dir)))
+    registry.register(build_posts_domain())
 
     # 5. Pre-warm Neo4j catalog so the first query against each label /
     # property does not emit a ``GqlStatusObject`` WARNING. Issued once per
@@ -102,6 +104,7 @@ async def lifespan(app: FastAPI):
     breadcrumb_gen = BreadcrumbGenerator(graph_writer)
     ingest_orch = IngestionOrchestrator(registry, vector_writer, lucene_writer, graph_writer, breadcrumb_gen)
     await _run_sync(ingest_orch.ingest_domain, "metadata", IngestionMode.FULL)
+    await _run_sync(ingest_orch.ingest_domain, "posts", IngestionMode.FULL)
 
     # 7. LLM + search pipeline
     intent_llm = build_llm_client(settings, role="intent")
