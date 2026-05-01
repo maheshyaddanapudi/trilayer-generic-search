@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from src.indexers.graph import GraphIndexWriter
 from src.models.core import MetadataChunk, ParsedIntent, SearchResult
 
 log = logging.getLogger(__name__)
+
+# Valid Cypher statements must start with one of these keywords.
+_CYPHER_START = re.compile(
+    r"^\s*(MATCH|CALL|WITH|RETURN|UNWIND|MERGE|CREATE|OPTIONAL)\b",
+    re.IGNORECASE,
+)
 
 
 class GraphSearch:
@@ -21,13 +28,18 @@ class GraphSearch:
             return []
 
         label_filter = f"Chunk_{domain_id}" if domain_id else None
-        cypher_hints = intent.cypher_hints or []
+        valid_hints = [h for h in (intent.cypher_hints or []) if _CYPHER_START.match(h)]
+        invalid = len((intent.cypher_hints or [])) - len(valid_hints)
+        if invalid:
+            log.info("Dropped %d malformed Cypher hint(s) that did not start with a valid keyword", invalid)
 
         results: list[SearchResult] = []
 
-        if cypher_hints:
-            results = self._run_cypher_hints(cypher_hints, domain_id, top_k)
-        else:
+        if valid_hints:
+            results = self._run_cypher_hints(valid_hints, domain_id, top_k)
+
+        # Fall back to fulltext whenever hints were absent, all invalid, or produced nothing.
+        if not results:
             results = self._fulltext_search(query, label_filter, top_k)
 
         return results[:top_k]
