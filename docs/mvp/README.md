@@ -55,6 +55,7 @@ implementation of the generic interfaces — the MVP is Phase 1, not a throwaway
 | [06](./06-entity-diagrams.md) | **Entity Diagrams** | Metadata graph + Document graph entity models |
 | [07](./07-sequence-diagrams.md) | **Sequence Diagrams** | Startup ingest, file upload, metadata search, doc search |
 | [08](./08-flow-diagrams.md) | **Flow Diagrams** | MVP write path, read path, breadcrumb generation per domain |
+| [09](./09-testing-report.md) | **Testing Report** | 5 functional TCs + 47 adversarial tests, 3-model comparison, bug log, Phase 1 readiness |
 
 ---
 
