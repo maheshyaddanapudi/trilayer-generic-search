@@ -1,8 +1,9 @@
-"""JSON API connector for jsonplaceholder /posts.
+"""Generic JSON array REST API connector.
 
-Fetches posts from a remote REST endpoint and yields RawEntity objects.
-The only thing specific to this API is _parse_record() — everything else
-(HTTP, pagination, retry) is reusable for any JSON array API.
+Fetches any URL that returns a JSON array and yields RawEntity objects.
+The only thing specific to a particular API is _parse_record() — everything
+else (HTTP, timeout, in-memory buffering) is reusable across domains.
+Subclass and override _parse_record() to adapt to a new JSON API.
 """
 from __future__ import annotations
 

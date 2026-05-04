@@ -15,7 +15,7 @@ from src.domain.graph_schema import (
     GraphSchema, NodeLabel, RelationshipDefinition, TraversalDirection, TraversalRule,
 )
 from src.domain.intent_prompt import IntentPromptConfig
-from plugins.posts.connector import JsonApiConnector
+from src.connectors.json_api import JsonApiConnector
 
 # ── Entity Types ──────────────────────────────────────────────────────────────
 
