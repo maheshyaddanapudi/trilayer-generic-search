@@ -447,7 +447,7 @@ class IndexWriter(ABC):
 
 ```python
 class VectorIndexWriter(IndexWriter):
-    """FAISS-backed. Thread-safe via internal lock."""
+    """PGVector-backed (PostgreSQL + HNSW index), partitioned by domain_id."""
     def __init__(self, model_name: str, dimension: int = 384) -> None: ...
     def index(self, chunks: list[MetadataChunk]) -> int: ...
     def similarity_search(
@@ -858,7 +858,8 @@ EMBEDDING_MODEL=all-MiniLM-L6-v2
 EMBEDDING_DIMENSION=384
 
 # Index storage
-FAISS_PERSIST_PATH=./data/faiss
+POSTGRES_URL=postgresql://tgs:tgs_password@localhost:5432/tgs_db
+POSTGRES_VECTOR_TABLE=metadata_chunks
 WHOOSH_INDEX_DIR=./data/whoosh
 
 # Ingestion

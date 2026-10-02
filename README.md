@@ -221,7 +221,7 @@ tests/               Unit, API, and (placeholder) integration tests
 ```
 
 The design documents in [`docs/`](docs/) describe the broader framework vision; some options there
-(for example a FAISS vector backend and an LLM-as-judge evaluator) are **not** part of the current
+(for example an LLM-as-judge evaluator) are **not** part of the current
 implementation. [`docs/mvp/`](docs/mvp/) describes what is built.
 
 ## Limitations
@@ -250,5 +250,4 @@ From [`docs/mvp/README.md`](docs/mvp/README.md), deferred beyond Phase 1:
 
 ## License
 
-No license file is included in this repository yet; all rights reserved by the author unless a
-license is added.
+MIT License — see [LICENSE](LICENSE).
