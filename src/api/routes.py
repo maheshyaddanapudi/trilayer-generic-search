@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hmac
 import time
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field
 
+from src.config import get_settings
 from src.connectors.file_system import SUPPORTED_MIMES
 from src.models.core import IngestionMode
 
@@ -284,7 +286,22 @@ async def delete_document(doc_id: str, request: Request) -> None:
 
 # ── Debug ──────────────────────────────────────────────────────────────────────
 
-@index_router.post("/debug/cypher")
+def require_debug_token(authorization: str | None = Header(default=None)) -> None:
+    """Guard for debug endpoints.
+
+    * ``DEBUG_API_TOKEN`` unset/empty  -> 404 (endpoint behaves as if it does not exist)
+    * missing / malformed / wrong token -> 401
+    """
+    expected = get_settings().debug_api_token
+    if not expected:
+        raise HTTPException(status_code=404, detail="Not Found")
+    scheme, _, supplied = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not hmac.compare_digest(supplied.encode(), expected.encode()):
+        raise HTTPException(status_code=401, detail="Invalid or missing debug token",
+                            headers={"WWW-Authenticate": "Bearer"})
+
+
+@index_router.post("/debug/cypher", dependencies=[Depends(require_debug_token)])
 async def debug_cypher(body: dict, request: Request) -> list[dict]:
     cypher = body.get("cypher", "")
     params = body.get("params", {})
