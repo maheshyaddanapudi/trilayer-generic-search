@@ -97,7 +97,7 @@ and relationships are also written to Neo4j as typed nodes and edges.
 git clone https://github.com/maheshyaddanapudi/trilayer-generic-search.git
 cd trilayer-generic-search
 
-cp .env.example .env          # then edit LLM settings (see below)
+cp .env.example .env          # then edit LLM settings (see below); .env is git-ignored
 docker compose up --build
 ```
 
@@ -129,6 +129,7 @@ The most relevant ones:
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | sentence-transformers model |
 | `METADATA_FILE` | `./data/sample_metadata.xml` | Metadata XML indexed at startup |
 | `RRF_K`, `GRAPH_BOOST_FACTOR`, `GRAPH_BOOST_TOP_N` | `60`, `1.5`, `3` | Fusion and boost tuning |
+| `DEBUG_API_TOKEN` | unset | Enables `POST /debug/cypher`; callers must send `Authorization: Bearer <token>`. Unset = endpoint disabled (404) |
 
 If the LLM is unreachable, intent parsing falls back to the heuristic and the `synthesis` field is
 returned empty; retrieval still works.
@@ -184,7 +185,7 @@ curl -s localhost:8000/search -H 'Content-Type: application/json' \
 | `POST` | `/domains/documents/files/upload` | Upload a PDF / DOCX / XLSX (≤ 20 MB) |
 | `GET` | `/domains/documents/files` | Documents uploaded since the app started |
 | `DELETE` | `/domains/documents/files/{doc_id}` | Remove a document from the list |
-| `POST` | `/debug/cypher` | Run an arbitrary Cypher query (development only) |
+| `POST` | `/debug/cypher` | Run an arbitrary Cypher query — disabled unless `DEBUG_API_TOKEN` is set; requires `Authorization: Bearer <token>` |
 
 ## Running tests
 
@@ -233,8 +234,9 @@ Known gaps in the current MVP:
 - The uploaded-document list is in memory, and `DELETE /domains/documents/files/{doc_id}` does
   not yet remove that document's chunks from the indexes.
 - Keyword-index terms are named "lucene" in code; the implementation is Whoosh.
-- There is no authentication. `/debug/cypher` executes arbitrary Cypher, and LLM-generated Cypher
-  hints are executed against Neo4j — run only in a trusted, local environment.
+- There is no authentication on the search and indexing endpoints, and LLM-generated Cypher hints
+  are executed against Neo4j — run only in a trusted, local environment. `/debug/cypher` is
+  disabled by default and token-protected when enabled.
 - Default credentials in `docker-compose.yml` are for local development only.
 
 ## Roadmap

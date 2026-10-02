@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
+    # Debug endpoint (/debug/cypher). Disabled unless a token is set; requests
+    # must then send ``Authorization: Bearer <DEBUG_API_TOKEN>``.
+    debug_api_token: str | None = None
+
 
 _settings: Settings | None = None
 

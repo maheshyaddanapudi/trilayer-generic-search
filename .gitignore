@@ -36,6 +36,7 @@ ENV/
 # Note: .env is currently committed for the MVP example. If you start storing
 # real secrets there, uncomment the next line.
 # .env
+.env
 .env.local
 *.pem
 *.key

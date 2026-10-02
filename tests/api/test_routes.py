@@ -411,25 +411,79 @@ def test_delete_document_vector_clear_failure_continues(full_state_app):
 
 # ── Debug cypher endpoint ─────────────────────────────────────────────────────
 
-def test_debug_cypher_ok(full_state_app):
+_TOKEN = "test-debug-token"
+_AUTH = {"Authorization": f"Bearer {_TOKEN}"}
+
+
+@pytest.fixture
+def debug_token(monkeypatch):
+    from src.config import reset_settings
+    monkeypatch.setenv("DEBUG_API_TOKEN", _TOKEN)
+    reset_settings()
+    yield _TOKEN
+    reset_settings()
+
+
+@pytest.fixture
+def no_debug_token(monkeypatch):
+    from src.config import reset_settings
+    monkeypatch.setenv("DEBUG_API_TOKEN", "")
+    reset_settings()
+    yield
+    reset_settings()
+
+
+def test_debug_cypher_disabled_when_token_unset(full_state_app, no_debug_token):
     with TestClient(full_state_app) as c:
-        resp = c.post("/debug/cypher", json={"cypher": "MATCH (n) RETURN n LIMIT 1"})
+        resp = c.post("/debug/cypher", json={"cypher": "MATCH (n) RETURN n"}, headers=_AUTH)
+    assert resp.status_code == 404
+    full_state_app.state.graph_writer.cypher_query.assert_not_called()
+
+
+def test_debug_cypher_missing_token(full_state_app, debug_token):
+    with TestClient(full_state_app) as c:
+        resp = c.post("/debug/cypher", json={"cypher": "MATCH (n) RETURN n"})
+    assert resp.status_code == 401
+    assert resp.headers["www-authenticate"] == "Bearer"
+    full_state_app.state.graph_writer.cypher_query.assert_not_called()
+
+
+def test_debug_cypher_wrong_token(full_state_app, debug_token):
+    with TestClient(full_state_app) as c:
+        resp = c.post("/debug/cypher", json={"cypher": "MATCH (n) RETURN n"},
+                      headers={"Authorization": "Bearer nope"})
+    assert resp.status_code == 401
+    full_state_app.state.graph_writer.cypher_query.assert_not_called()
+
+
+def test_debug_cypher_wrong_scheme(full_state_app, debug_token):
+    with TestClient(full_state_app) as c:
+        resp = c.post("/debug/cypher", json={"cypher": "MATCH (n) RETURN n"},
+                      headers={"Authorization": f"Basic {_TOKEN}"})
+    assert resp.status_code == 401
+
+
+def test_debug_cypher_ok(full_state_app, debug_token):
+    with TestClient(full_state_app) as c:
+        resp = c.post("/debug/cypher", json={"cypher": "MATCH (n) RETURN n LIMIT 1"},
+                      headers=_AUTH)
     assert resp.status_code == 200
     full_state_app.state.graph_writer.cypher_query.assert_called_once()
 
 
-def test_debug_cypher_with_params(full_state_app):
+def test_debug_cypher_with_params(full_state_app, debug_token):
     full_state_app.state.graph_writer.cypher_query.return_value = []
     with TestClient(full_state_app) as c:
         resp = c.post("/debug/cypher",
                       json={"cypher": "MATCH (n) WHERE n.code = $code RETURN n",
-                            "params": {"code": "REVENUE"}})
+                            "params": {"code": "REVENUE"}},
+                      headers=_AUTH)
     assert resp.status_code == 200
 
 
-def test_debug_cypher_missing_field(full_state_app):
+def test_debug_cypher_missing_field(full_state_app, debug_token):
     with TestClient(full_state_app) as c:
-        resp = c.post("/debug/cypher", json={"cypher": ""})
+        resp = c.post("/debug/cypher", json={"cypher": ""}, headers=_AUTH)
     assert resp.status_code == 422
 
 
@@ -485,7 +539,9 @@ def test_create_app_returns_fastapi():
 
 def test_create_app_has_routes():
     app = create_app()
-    paths = {r.path for r in app.routes}
+    # Use the OpenAPI schema: newer FastAPI versions wrap included routers
+    # in objects without a ``.path`` attribute.
+    paths = set(app.openapi()["paths"])
     assert "/health" in paths
     assert "/search" in paths
     assert "/domains/metadata/index" in paths
