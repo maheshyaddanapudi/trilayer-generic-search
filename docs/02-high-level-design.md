@@ -357,7 +357,7 @@ Source ──► RawEntity ──► MetadataChunk         Query + session_id
                               │                  │
                     ┌─────────┼─────────┐        ▼
                     │         │         │     ParsedIntent
-                  FAISS    Whoosh    Neo4j       │
+               pgvector  Whoosh    Neo4j       │
                     │         │         │    ┌───┼───┬────────┐
                     └─────────┼─────────┘    │   │   │        │
                               │             Vec Luc Graph  Session

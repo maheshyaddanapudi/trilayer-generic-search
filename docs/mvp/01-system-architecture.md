@@ -171,7 +171,7 @@ needed since RRF handles merging by rank position alone.
 **Decision:** Vectors are stored in PostgreSQL via the `pgvector` extension, using an HNSW
 index for approximate nearest-neighbour search.
 **Rationale:** Persistent from day one — no re-embedding on restart. Metadata filtering
-(by `domain_id` column) co-located with the vectors. HNSW latency is negligible vs FAISS
+(by `domain_id` column) co-located with the vectors. HNSW latency is negligible vs an in-memory index
 at the expected MVP corpus size (< 50K chunks). PostgreSQL is a standard dependency that
 most teams already operate.
 **Config:** `POSTGRES_URL=postgresql://tgs:tgs_password@postgres:5432/tgs_db`

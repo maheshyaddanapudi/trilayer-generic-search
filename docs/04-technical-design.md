@@ -34,7 +34,7 @@ trilayer-generic-search/
 │   ├── indexers/                   ← IndexWriter implementations
 │   │   ├── __init__.py
 │   │   ├── base.py                 ← IndexWriter ABC
-│   │   ├── vector.py               ← VectorIndexWriter (FAISS)
+│   │   ├── vector.py               ← VectorIndexWriter (PGVector)
 │   │   ├── lucene.py               ← LuceneIndexWriter (Whoosh)
 │   │   └── graph.py                ← GraphIndexWriter (Neo4j)
 │   │
@@ -110,9 +110,7 @@ trilayer-generic-search/
 
 | Option | When to use | Trade-off |
 |---|---|---|
-| **FAISS CPU** (default) | Development, small corpora (<1M chunks) | In-memory; fast; no infra overhead; not persistent by default |
-| **FAISS + disk persistence** | Medium corpora; single-node | `save_local` / `load_local`; still single-process |
-| **PGVector** (POC 3 target) | Production; multi-process; filtered search | Needs PostgreSQL; supports metadata filtering natively |
+| **PGVector** (default) | All corpus sizes; multi-process; filtered search | Needs PostgreSQL; persistent; HNSW ANN; supports metadata filtering natively |
 
 **Embedding model:** `all-MiniLM-L6-v2` (384-dim, 80MB, CPU-fast).
 Domain-specific fine-tuning is an extension point: swap via `EMBEDDING_MODEL` env var.
@@ -210,7 +208,7 @@ chunk_vectors = embedder.encode(texts)          # same model as VectorSearch
 query_text = " ".join(intent.entities + intent.expanded_terms)
 query_vector = embedder.encode(query_text)
 
-# Cosine similarity (no FAISS needed — linear scan is fine at this N)
+# Cosine similarity (no vector index needed — linear scan is fine at this N)
 scores = cosine_similarity([query_vector], chunk_vectors)[0]
 ranked = sorted(zip(chunks, scores), key=lambda x: x[1], reverse=True)
 return [SearchResult(chunk=c.to_metadata_chunk(), score=s, rank=i+1,
@@ -448,7 +446,7 @@ def rrf_merge(
 
 | Concern | Approach |
 |---|---|
-| Large corpora (>1M chunks) | Migrate FAISS → PGVector; Whoosh → Elasticsearch |
+| Large corpora (>1M chunks) | Tune pgvector HNSW parameters / scale PostgreSQL; Whoosh → Elasticsearch |
 | Multiple simultaneous searches | FastAPI async handles concurrent requests; asyncio.gather for tri-dispatch |
 | Multiple domains | Each domain has isolated index partitions; no contention |
 | Heavy ingestion load | Background task queue (Celery or asyncio task group) for large batch jobs |
@@ -481,7 +479,7 @@ tests/
 │   └── test_domain_config.py           ← Config validation
 │
 ├── integration/
-│   ├── test_vector_indexer.py          ← Requires FAISS
+│   ├── test_vector_indexer.py          ← Requires PostgreSQL + pgvector (Docker)
 │   ├── test_lucene_indexer.py          ← Requires Whoosh on disk
 │   ├── test_graph_indexer.py           ← Requires Neo4j (Docker)
 │   ├── test_ingestion_orchestrator.py  ← Full write path
@@ -511,7 +509,8 @@ langgraph>=0.1.0
 langchain-anthropic>=0.1.0
 
 # Vector
-faiss-cpu>=1.8.0
+pgvector>=0.3.0
+psycopg2-binary>=2.9.9
 sentence-transformers>=3.0.0
 
 # Keyword
