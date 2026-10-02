@@ -220,7 +220,7 @@ tests/               Unit, API, and (placeholder) integration tests
 ```
 
 The design documents in [`docs/`](docs/) describe the broader framework vision; some options there
-(for example a FAISS vector backend and an LLM-as-judge evaluator) are **not** part of the current
+(for example an LLM-as-judge evaluator) are **not** part of the current
 implementation. [`docs/mvp/`](docs/mvp/) describes what is built.
 
 ## Limitations

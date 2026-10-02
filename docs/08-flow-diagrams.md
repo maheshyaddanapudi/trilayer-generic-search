@@ -31,7 +31,7 @@ flowchart TD
     Q -->|no| I
     Q -->|yes| R[Fan-out to all three writers]
 
-    R --> S[VectorIndexWriter.index\nencode breadcrumbs → FAISS]
+    R --> S[VectorIndexWriter.index\nencode breadcrumbs → PGVector]
     R --> T[LuceneIndexWriter.index\ntokenize → Whoosh]
     R --> U[GraphIndexWriter.index\nMERGE nodes + edges → Neo4j]
 
@@ -86,7 +86,7 @@ flowchart TD
 
     N[ParsedIntent ready] --> O[asyncio.gather\ntri-dispatch in parallel]
 
-    O --> P[VectorSearch.search\nencode query → ANN lookup → FAISS]
+    O --> P[VectorSearch.search\nencode query → ANN lookup → PGVector]
     O --> Q[LuceneSearch.search\nBM25 keyword match → Whoosh]
     O --> R[GraphSearch.search\nCypher traversal OR entity lookup → Neo4j]
     O --> RS[SessionSearch.search\ncosine scan → SessionRegistry]

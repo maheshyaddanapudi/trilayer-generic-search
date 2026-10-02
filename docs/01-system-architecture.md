@@ -71,7 +71,7 @@ graph TB
         end
 
         subgraph IndexLayer [Tri-Index Layer]
-            VI[Vector Index<br/>FAISS / PGVector]
+            VI[Vector Index<br/>PGVector]
             LI[Lucene Index<br/>Whoosh / Elasticsearch]
             GI[Graph Index<br/>Neo4j]
         end
@@ -100,7 +100,7 @@ graph TB
 
     subgraph Storage [Persistent Storage]
         NEO4J[(Neo4j<br/>Graph DB)]
-        FAISS_STORE[(FAISS Index<br/>in-memory / on-disk)]
+        PG_STORE[(PostgreSQL + pgvector<br/>HNSW index)]
         WHOOSH_STORE[(Whoosh Index<br/>on-disk)]
     end
 
@@ -120,7 +120,7 @@ graph TB
     IO --> LI
     IO --> GI
 
-    VI --> FAISS_STORE
+    VI --> PG_STORE
     LI --> WHOOSH_STORE
     GI --> NEO4J
 
@@ -194,8 +194,7 @@ reused across all domains.
 | Concern | Technology | Rationale |
 |---|---|---|
 | API framework | FastAPI | Async-native, auto OpenAPI, consistent with POC |
-| Vector index (default) | FAISS CPU | Zero-infra, fast ANN; swappable to PGVector |
-| Vector index (alt) | PGVector + PostgreSQL | Persistent, supports filtered search; POC 3 target |
+| Vector index | PGVector + PostgreSQL | Persistent, HNSW ANN search, metadata-filtered queries |
 | Keyword index (default) | Whoosh | Pure Python, zero-infra, on-disk persistence |
 | Keyword index (alt) | Elasticsearch | Production-grade; same interface |
 | Graph database | Neo4j 5.x | Native property graph; Cypher; persistent |
@@ -223,7 +222,7 @@ reused across all domains.
 │                                                     │
 │  Volumes:                                           │
 │    neo4j_data   (persistent graph)                  │
-│    faiss_data   (optional: persisted FAISS)         │
+│    pg_data      (persistent pgvector store)         │
 │    whoosh_data  (persistent Lucene index)            │
 │    domain_data  (source files, connector caches)    │
 └─────────────────────────────────────────────────────┘
@@ -240,7 +239,7 @@ complex logic (e.g., custom breadcrumb generators) is natural in code.
 **Trade-off:** Requires a Python deployment per plugin; no hot-reload of plugins at runtime.
 
 ### ADR-002: Namespace isolation per domain
-**Decision:** Each domain gets its own Neo4j label prefix, FAISS partition, and Whoosh index directory.
+**Decision:** Each domain gets its own Neo4j label prefix, pgvector partition (domain_id column), and Whoosh index directory.
 **Rationale:** Prevents cross-domain result contamination; allows per-domain index operations
 (re-index one domain without touching others).
 **Trade-off:** Cross-domain graph traversal requires explicit opt-in bridge relationships.

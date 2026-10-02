@@ -227,7 +227,7 @@ sequenceDiagram
     par Parallel tri-dispatch
         SO->>VS: search(intent, top_k)
         VS->>VS: encode(entities + expanded_terms)
-        VS->>VS: faiss_index.search(vector, top_k)
+        VS->>VS: pgvector HNSW search(vector, top_k)
         VS-->>SO: [SearchResult x top_k]
     and
         SO->>LS: search(intent, top_k)

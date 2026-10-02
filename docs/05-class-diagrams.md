@@ -236,7 +236,8 @@ classDiagram
 
     class VectorIndexWriter {
         -SentenceTransformer _model
-        -faiss.Index _index
+        -str _postgres_url
+        -str _table
         -dict _chunks
         -threading.Lock _lock
         -str _model_name
